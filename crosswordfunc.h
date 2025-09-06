@@ -18,3 +18,5 @@ int addWord(char board[wordLength][wordLength], char solutionBoard[wordLength][w
 int setWords(char board[wordLength][wordLength], char solutionBoard[wordLength][wordLength], char words[initialListLength][wordLength], int length, wordInformation wordList[]);
 void displayBoard(char board[wordLength][wordLength], char solutionBoard[wordLength][wordLength]);
 void generateAnagrams(wordInformation words[], int length);
+char* strfry(char* s);
+void safeCopy(char dest[], const char *src);
