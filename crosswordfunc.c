@@ -6,6 +6,11 @@
 #include <ctype.h>
 #include "crosswordfunc.h"
 
+void safeCopy(char dest[], const char *src) {
+    strncpy(dest, src, wordLength - 1);
+    dest[wordLength - 1] = '\0';
+}
+
 //This function copies the file inputted by the user into the words array, while making sure there aren't any imporoper characters
 int copyFile(FILE *file, char arr[initialListLength][wordLength]) {
 	int i = 0;
@@ -31,7 +36,7 @@ int copyFile(FILE *file, char arr[initialListLength][wordLength]) {
 			j = 0;
 			continue;
 		} else if ((c < 65 || (c > 90 && c < 97) || c > 122 || j > wordLength-1) && c != EOF) {
-				printf("Improper formatting of the word!\n");
+				//printf("Improper formatting of the word!\n");
 				
 				for (int k = 0; k < wordLength; k++) {
 					arr[i][k] = '\0';
@@ -65,7 +70,7 @@ void setUppercase(char arr[]) {
 void sortArray(char words[initialListLength][wordLength], int length) {
 	for (int i = 0; i < length; i++) {
 		char tempString[wordLength];
-		strcpy(tempString, words[i]);
+		safeCopy(tempString, words[i]);
 		int index = i;
 
 		for (int j = i; j < length; j++) {
@@ -73,9 +78,11 @@ void sortArray(char words[initialListLength][wordLength], int length) {
 				index = j;
 			}
 		}
-		
-		strcpy(words[i], words[index]);
-		strcpy(words[index], tempString);
+
+		char tmp[wordLength];
+        safeCopy(tmp, words[index]);
+        safeCopy(words[i], tmp);
+        safeCopy(words[index], tempString);
 	}
 }
 
@@ -89,11 +96,9 @@ void setBoard(char board[wordLength][wordLength], char solutionBoard[wordLength]
 	}
 
 	char longestWord[wordLength];
-	strcpy(longestWord, words[0]);
-
+    safeCopy(longestWord, words[0]);
 	int spaces = (wordLength-strlen(longestWord))/2;
-
-	strcpy(wordList[0].word, longestWord);
+	safeCopy(wordList[0].word, longestWord);
 	wordList[0].location[0] = spaces;
 	wordList[0].location[1] = (1+wordLength)/2-1;
 	wordList[0].direction = 0;
@@ -143,7 +148,7 @@ int addWord(char board[wordLength][wordLength], char solutionBoard[wordLength][w
 		}
 
 		//Adding the information about the word to the struct array for later use
-		strcpy(wordList[place].word, word);
+		safeCopy(wordList[place].word, word);
 		wordList[place].location[0] = positionX;
 		wordList[place].location[1] = positionY-index;
 		wordList[place].direction = 1;
@@ -163,7 +168,7 @@ int addWord(char board[wordLength][wordLength], char solutionBoard[wordLength][w
 			solutionBoard[positionY][positionX-index+i] = word[i];
 		}
 
-		strcpy(wordList[place].word, word);
+		safeCopy(wordList[place].word, word);
 		wordList[place].location[0] = positionX-index;
 		wordList[place].location[1] = positionY;
 		wordList[place].direction = 0;
@@ -216,7 +221,7 @@ int setWords(char board[wordLength][wordLength], char solutionBoard[wordLength][
 
 		if (!condition) {
 			printf("It was not possible to place %s. My program will try to place it later.\n", words[i]);
-			strcpy(skippedWords[skippedWordsPosition], words[i]);
+			safeCopy(skippedWords[skippedWordsPosition], words[i]);
 			skippedWordsPosition++;
 		}
 	}
@@ -261,9 +266,11 @@ int setWords(char board[wordLength][wordLength], char solutionBoard[wordLength][
 				}
 
 				if (!condition) {
-					printf("It was not possible to place %s (At least right now). My program will try to place it later.\n", skippedWords[i]);
-					strcpy(skippedWords[newSkippedWordsLength], skippedWords[i]);
-					newSkippedWordsLength++;
+					if (newSkippedWordsLength != i) {
+						printf("It was not possible to place %s (At least right now). My program will try to place it later.\n", skippedWords[i]);
+						safeCopy(skippedWords[newSkippedWordsLength], skippedWords[i]);
+						newSkippedWordsLength++;
+					}
 				}
 			}
 
@@ -287,7 +294,7 @@ int setWords(char board[wordLength][wordLength], char solutionBoard[wordLength][
 	} else {
 		printf("My program was able to successfully place every word!\n");
 	}
-	
+
 	return place;
 }
 
@@ -322,6 +329,19 @@ void displayBoard(char board[wordLength][wordLength], char solutionBoard[wordLen
 
 }
 
+char* strfry(char* s) {
+    size_t len = strlen(s);
+    if (len <= 1) return s;
+
+    for (size_t i = len - 1; i > 0; i--) {
+        size_t j = rand() % (i + 1);
+        char tmp = s[i];
+        s[i] = s[j];
+        s[j] = tmp;
+    }
+
+    return s;
+}
 
 //It will generate the anagrams as well as providing the location and diretion of the words on the board
 void generateAnagrams(wordInformation words[], int length) {
@@ -333,7 +353,7 @@ void generateAnagrams(wordInformation words[], int length) {
 	//Randomize array. strfry but for the struct array
 	for (int i = 0; i < length; i++) {
 		char tempWord[wordLength];
-		strcpy(tempWord, words[i].word);
+		safeCopy(tempWord, words[i].word);
 		int tempLocation1 = words[i].location[0];
 		int tempLocation2 = words[i].location[1];
 		int tempDirection = words[i].direction;
@@ -341,13 +361,17 @@ void generateAnagrams(wordInformation words[], int length) {
 
 		int ran = rand()%length;
 
-		strcpy(words[i].word, words[ran].word);
+		while (ran == i) {
+			ran = rand()%length;
+		}
+
+		safeCopy(words[i].word, words[ran].word);
 		words[i].location[0] = words[ran].location[0];
 		words[i].location[1] = words[ran].location[1];
 		words[i].direction = words[ran].direction;
 		words[i].length = words[ran].length;
 
-		strcpy(words[ran].word, tempWord);
+		safeCopy(words[ran].word, tempWord);
 		words[ran].location[0] = tempLocation1;
 		words[ran].location[1] = tempLocation2;
 		words[ran].direction = tempDirection;
